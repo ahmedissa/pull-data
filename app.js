@@ -5,6 +5,7 @@ var mongo = require('mongoskin');
 var CronJob = require('cron').CronJob;
 var moment = require('moment');
 var request = require('request');
+var async = require("async");
 
 var Server = mongo.Server;
 
@@ -88,8 +89,7 @@ jobPullMatchData = new CronJob({
 			//  should be run in parallel
 
 			url = '/api/lol/euw/v2.2/match/';
-			for (var i = items.length - 1; i >= 0; i--) {
-				(function (currentMatchId) {
+			var processmatch = function (currentMatchId, callback) {
 				  request(
 				    { method: 'GET',
 				    	json: true,
@@ -99,8 +99,7 @@ jobPullMatchData = new CronJob({
 				  		console.log( process.env.API_ROOT_URL + url + '?api_key='+ process.env.API_KEY + '&includeTimeline=true');
 
 				      if (error) {
-								console.log(moment().format("dddd, MMMM Do YYYY, h:mm:ss a"), moment().unix(),  url, 
-							  									 "error: " + error.message);
+								callback(error);
 				      	return; 
 				      }
 
@@ -116,22 +115,30 @@ jobPullMatchData = new CronJob({
 
 								    db.matchId.remove({matchId: currentMatchId}, { w: 0 });
 
+								    callback();
 								  })
 						  } else if (! (response.statusCode === 429 )) {
 						  	// match is not reachable 
 						  	console.log(response.statusCode);
 								db.matchId.remove({matchId: currentMatchId}, { w: 0 });
+								callback();
+						  }else {
+								console.log(moment().format("dddd, MMMM Do YYYY, h:mm:ss a"), moment().unix(),  url, 
+							  									 "Got response: " + response.statusCode);
+
+						  	callback();
 						  }
 
-							console.log(moment().format("dddd, MMMM Do YYYY, h:mm:ss a"), moment().unix(),  url, 
-						  									 "Got response: " + response.statusCode);
 				    }
 				  )
-				})(items[i].matchId);
-
-
 			};
 
+			async.eachLimit(items, 5, processmatch, function(err){
+				console.log(moment().format("dddd, MMMM Do YYYY, h:mm:ss a"), moment().unix(),  url, 
+									 "error: " + err.message);
+			});
+
+			
 
 		});
 
