@@ -89,7 +89,8 @@ jobPullMatchData = new CronJob({
 			//  should be run in parallel
 
 			url = '/api/lol/euw/v2.2/match/';
-			var processmatch = function (currentMatchId, callback) {
+			var processmatch = function (currentMatch, callback) {
+					var currentMatchId = currentMatch.matchId; 
 				  request(
 				    { method: 'GET',
 				    	json: true,
@@ -135,7 +136,7 @@ jobPullMatchData = new CronJob({
 
 			async.eachLimit(items, 5, processmatch, function(err){
 				console.log(moment().format("dddd, MMMM Do YYYY, h:mm:ss a"), moment().unix(),  url, 
-									 "error: " + err.message);
+									 "error: " ,err);
 			});
 
 			
