@@ -97,10 +97,11 @@ jobPullMatchData = new CronJob({
 				      url: process.env.API_ROOT_URL + url + currentMatchId +  '?api_key='+ process.env.API_KEY + '&includeTimeline=true'
 				    }
 				  , function (error, response, body) {
-				  		console.log( process.env.API_ROOT_URL + url + '?api_key='+ process.env.API_KEY + '&includeTimeline=true');
+				  		console.log(  currentMatchId + '?api_key='+ process.env.API_KEY + '&includeTimeline=true');
+				      
 
 				      if (error) {
-								callback(error);
+				      	callback(error);
 				      	return; 
 				      }
 
@@ -122,13 +123,12 @@ jobPullMatchData = new CronJob({
 						  	// match is not reachable 
 						  	console.log(response.statusCode);
 								db.matchId.remove({matchId: currentMatchId}, { w: 0 });
-								callback();
 						  }else {
 								console.log(moment().format("dddd, MMMM Do YYYY, h:mm:ss a"), moment().unix(),  url, 
 							  									 "Got response: " + response.statusCode);
 
-						  	callback();
 						  }
+						  callback();
 
 				    }
 				  )
